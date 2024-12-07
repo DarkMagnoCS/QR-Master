@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import qrcode
 from io import BytesIO
 import base64
+from flask_cors import CORS
+CORS(app)
 
 app = Flask(__name__)
 
