@@ -1,6 +1,15 @@
 import React, { useState } from "react";
 import axios from "axios";
 
+const countryCodes = [
+  { name: "Uruguay", code: "+598" },
+  { name: "USA", code: "+1" },
+  { name: "UK", code: "+44" },
+  { name: "India", code: "+91" },
+  { name: "Germany", code: "+49" },
+  // Add more country codes here
+];
+
 const QRGenerator = () => {
   const [selectedOption, setSelectedOption] = useState("");
   const [inputData, setInputData] = useState({});
@@ -11,12 +20,47 @@ const QRGenerator = () => {
   };
 
   const handleGenerate = async () => {
+    let formattedData = "";
+
+    switch (selectedOption) {
+      case "url":
+        formattedData = inputData.url || "";
+        break;
+      case "whatsapp":
+        if (inputData.countryCode && inputData.phoneNumber) {
+          const phone = inputData.countryCode + inputData.phoneNumber;
+          formattedData = `https://wa.me/${phone}`;
+        }
+        break;
+      case "wifi":
+        if (inputData.ssid) {
+          formattedData = `WIFI:S:${inputData.ssid};T:${inputData.networkType || ""};P:${inputData.password || ""};H:${inputData.hidden ? "true" : "false"};`;
+        } else {
+          alert("Please enter the Name of the Network (SSID)!");
+          return;
+        }
+        break;
+      default:
+        console.error("Invalid option selected.");
+    }
+
+    if (!formattedData) {
+      alert("Please fill in all required fields!");
+      return;
+    }
+
     try {
-      const response = await axios.post("http://127.0.0.1:5000/generate", { data: inputData });
+      const response = await axios.post("http://127.0.0.1:5000/generate", { data: formattedData });
       setQrCode(response.data.qr_code);
     } catch (error) {
       console.error("Error generating QR code:", error);
     }
+  };
+
+  const handleOptionChange = (option) => {
+    setSelectedOption(option);
+    setInputData({});
+    setQrCode("");
   };
 
   const renderInputs = () => {
@@ -28,6 +72,7 @@ const QRGenerator = () => {
             <input
               type="text"
               placeholder="https://"
+              value={inputData.url || ""}
               onChange={(e) => handleInputChange("url", e.target.value)}
             />
             <p>Your QR code will open this URL.</p>
@@ -37,15 +82,22 @@ const QRGenerator = () => {
         return (
           <div>
             <label>Country code</label>
-            <input
-              type="text"
-              placeholder="--"
+            <select
+              value={inputData.countryCode || ""}
               onChange={(e) => handleInputChange("countryCode", e.target.value)}
-            />
+            >
+              <option value="">Select a country</option>
+              {countryCodes.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name} ({country.code})
+                </option>
+              ))}
+            </select>
             <label>Phone number</label>
             <input
               type="text"
               placeholder="Enter phone number"
+              value={inputData.phoneNumber || ""}
               onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
             />
             <p>Scanning the QR code will send a message to the phone number.</p>
@@ -54,30 +106,40 @@ const QRGenerator = () => {
       case "wifi":
         return (
           <div>
-            <label>Network name (SSID)</label>
+            <label>
+              Name of the Network (SSID) <span style={{ color: "red" }}>*</span>
+            </label>
             <input
               type="text"
-              placeholder="SSID"
+              placeholder="Name of the network"
+              value={inputData.ssid || ""}
               onChange={(e) => handleInputChange("ssid", e.target.value)}
+              required
             />
-            <label>Network type</label>
-            <select onChange={(e) => handleInputChange("networkType", e.target.value)}>
+            <label>Encryption Type</label>
+            <select
+              value={inputData.networkType || ""}
+              onChange={(e) => handleInputChange("networkType", e.target.value)}
+            >
               <option value="none">No encryption</option>
-              <option value="WPA">WPA/WPA2</option>
+              <option value="WPA">WPA</option>
               <option value="WEP">WEP</option>
+              <option value="WPA-EAP">WPA-EAP</option>
             </select>
             <label>Password</label>
             <input
               type="text"
               placeholder="Wi-Fi password"
+              value={inputData.password || ""}
               onChange={(e) => handleInputChange("password", e.target.value)}
             />
             <label>
               <input
                 type="checkbox"
+                checked={inputData.hidden || false}
                 onChange={(e) => handleInputChange("hidden", e.target.checked)}
               />
-              Hidden
+              Hidden Network
             </label>
             <p>Scanning the QR code will connect to the Wi-Fi network.</p>
           </div>
@@ -92,19 +154,19 @@ const QRGenerator = () => {
       <h1>QR Code Generator</h1>
       <div>
         <button
-          onClick={() => setSelectedOption("url")}
+          onClick={() => handleOptionChange("url")}
           className={selectedOption === "url" ? "selected" : ""}
         >
           URL
         </button>
         <button
-          onClick={() => setSelectedOption("whatsapp")}
+          onClick={() => handleOptionChange("whatsapp")}
           className={selectedOption === "whatsapp" ? "selected" : ""}
         >
           WhatsApp
         </button>
         <button
-          onClick={() => setSelectedOption("wifi")}
+          onClick={() => handleOptionChange("wifi")}
           className={selectedOption === "wifi" ? "selected" : ""}
         >
           Wi-Fi
