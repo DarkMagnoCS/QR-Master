@@ -91,10 +91,26 @@ const QRGenerator = () => {
     <div style={{ padding: "20px", maxWidth: "600px", margin: "auto", textAlign: "center" }}>
       <h1>QR Code Generator</h1>
       <div>
-        <button onClick={() => setSelectedOption("url")}>URL</button>
-        <button onClick={() => setSelectedOption("whatsapp")}>WhatsApp</button>
-        <button onClick={() => setSelectedOption("wifi")}>Wi-Fi</button>
+        <button
+          onClick={() => setSelectedOption("url")}
+          className={selectedOption === "url" ? "selected" : ""}
+        >
+          URL
+        </button>
+        <button
+          onClick={() => setSelectedOption("whatsapp")}
+          className={selectedOption === "whatsapp" ? "selected" : ""}
+        >
+          WhatsApp
+        </button>
+        <button
+          onClick={() => setSelectedOption("wifi")}
+          className={selectedOption === "wifi" ? "selected" : ""}
+        >
+          Wi-Fi
+        </button>
       </div>
+
       <div style={{ marginTop: "20px" }}>{renderInputs()}</div>
       {selectedOption && (
         <button onClick={handleGenerate} style={{ marginTop: "10px", padding: "10px" }}>
